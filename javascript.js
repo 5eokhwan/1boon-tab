@@ -1,3 +1,7 @@
+function sleep(ms) {
+    const wakeUpTime = Date.now() + ms;
+    while (Date.now() < wakeUpTime) {}
+}
 function readTextFile(file, callback) {
     var rawFile = new XMLHttpRequest();
     rawFile.overrideMimeType("application/json");
@@ -9,21 +13,27 @@ function readTextFile(file, callback) {
     };
     rawFile.send(null);
 }
-
 let $RecentBtn = document.getElementById("Recent");
 let $ManyViewBtn = document.getElementById("ManyView");
 let $PopularityBtn = document.getElementById("Popularity");
 let $list = document.getElementById("list");
+let $loading = document.getElementById("loading");
 
 const renderData = function (text) {
     datas = JSON.parse(text);
     console.log(datas);
-    let html = "";
-    for (let i = 0; i < datas.length; i++) {
-        html += `<h4>${datas[i].title}</h4>
-    <p>${datas[i].url}</p>`;
-    }
+    let html = `<div id="loading" class="text-center">
+                <span class="glyphicon glyphicon-refresh"></span>로딩중
+                </div>`;
     $list.innerHTML = html;
+    setTimeout(() => {
+        html = "";
+        for (let i = 0; i < datas.length; i++) {
+            html += `<h4>${datas[i].title}</h4>
+    <p>${datas[i].url}</p>`;
+        }
+        $list.innerHTML = html;
+    }, 1000);
 };
 
 let $selected = null;
@@ -53,7 +63,6 @@ const showPopularity = (e) => {
 $selected = $RecentBtn;
 $RecentBtn.classList.add("active");
 readTextFile("recent.json", renderData);
-
 $RecentBtn.addEventListener("click", showRecent);
 $ManyViewBtn.addEventListener("click", showManyView);
 $PopularityBtn.addEventListener("click", showPopularity);
