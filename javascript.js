@@ -2,13 +2,13 @@ function sleep(ms) {
     const wakeUpTime = Date.now() + ms;
     while (Date.now() < wakeUpTime) {}
 }
-function readTextFile(file, callback) {
+function readTextFile(file, callback, contentName) {
     var rawFile = new XMLHttpRequest();
     rawFile.overrideMimeType("application/json");
     rawFile.open("GET", file, true);
     rawFile.onreadystatechange = function () {
         if (rawFile.readyState === 4 && rawFile.status == "200") {
-            callback(rawFile.responseText);
+            callback(rawFile.responseText, contentName);
         }
     };
     rawFile.send(null);
@@ -18,9 +18,23 @@ let $ManyViewBtn = document.getElementById("ManyView");
 let $PopularityBtn = document.getElementById("Popularity");
 let $list = document.getElementById("list");
 let $loading = document.getElementById("loading");
+let $moreBtn = document.getElementById("more");
 
-const renderData = function (text) {
+let datas;
+let currentContent = "Recent";
+let currentPage = 1;
+let showingMax = 10;
+let contentLen;
+
+const renderData = function (text, contentName) {
+    console.log("currentContent", currentContent, "contentName", contentName);
+    if (currentContent !== contentName) {
+        currentPage = 1;
+        currentContent = contentName;
+        console.log("chigau");
+    }
     datas = JSON.parse(text);
+    contentLen = datas.length;
     console.log(datas);
     let html = `<div id="loading" class="text-center">
                 <span class="glyphicon glyphicon-refresh"></span>로딩중
@@ -28,9 +42,17 @@ const renderData = function (text) {
     $list.innerHTML = html;
     setTimeout(() => {
         html = "";
-        for (let i = 0; i < datas.length; i++) {
-            html += `<h4>${datas[i].title}</h4>
-    <p>${datas[i].url}</p>`;
+        for (let i = 0; i < showingMax * currentPage; i++) {
+            if (!datas[i]) {
+                break;
+            }
+            html += `<div class="content"><h2>${i + 1}</h2><h4>${
+                datas[i].title
+            }</h4>
+                <p>${datas[i].url}</p>
+                <img src=${datas[i].img} style=" width:50px; height= 35px;" />
+                <p>${datas[i].cp}</p>
+                </div>`;
         }
         $list.innerHTML = html;
     }, 1000);
@@ -46,26 +68,31 @@ function activeTap(e) {
 const showRecent = (e) => {
     e.preventDefault();
     activeTap(e);
-    readTextFile("recent.json", renderData);
+    readTextFile("recent.json", renderData, "Recent");
 };
 const showManyView = (e) => {
     e.preventDefault();
     activeTap(e);
-    readTextFile("view.json", renderData);
+    readTextFile("view.json", renderData, "ManyView");
 };
 const showPopularity = (e) => {
     e.preventDefault();
     activeTap(e);
-    readTextFile("popular.json", renderData);
+    readTextFile("popular.json", renderData, "Popularity");
+};
+const showMore = (e) => {
+    currentPage++;
+    readTextFile("popular.json", renderData, currentContent);
 };
 
 //init
 $selected = $RecentBtn;
 $RecentBtn.classList.add("active");
-readTextFile("recent.json", renderData);
+readTextFile("recent.json", renderData, "Recent");
 $RecentBtn.addEventListener("click", showRecent);
 $ManyViewBtn.addEventListener("click", showManyView);
 $PopularityBtn.addEventListener("click", showPopularity);
+$moreBtn.addEventListener("click", showMore);
 
 // 1boon 채널 탭 UI구현 (최근,많이본,실시간인기)
 // 각 탭을 누를때마다 해당 API를 사용하여 결과 표시
